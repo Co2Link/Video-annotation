@@ -17,8 +17,10 @@ Person = dict(config['PERSON'])
 Action = dict(config['ACTION'])
 Setting = dict(config['SETTING'])
 
-# Delay bwetween frames
 DELAY = int(Setting['delay'])
+
+WINDOW_SIZE = (int(Setting['window_width']),int(Setting['window_height']))
+CANVAS_SIZE = (int(Setting['canvas_width']),int(Setting['canvas_height']))
 
 
 class App:
@@ -35,7 +37,7 @@ class App:
         menubar.add_cascade(label="FIle",menu=fileMenu)
 
         # Create a canvas that can fit the video
-        self.canvas = tk.Canvas(window, width = 1280, height = 720)
+        self.canvas = tk.Canvas(window, width = CANVAS_SIZE[0], height = CANVAS_SIZE[1],bg='black')
         self.canvas.pack()
 
         # Progress bar
@@ -108,7 +110,7 @@ class App:
     
     def onOpen(self):
         """ Open video file """
-        self.video_path = tk.filedialog.askopenfilename(initialdir="C:",
+        self.video_path = tk.filedialog.askopenfilename(initialdir=os.path.dirname(os.path.abspath(__file__)),
                                 filetypes =(("Video File", "*.mp4"),("All Files","*.*")),
                                 title = "Choose a file."
                                 )
@@ -190,7 +192,7 @@ class App:
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
             # resize img without distortion, time cost is much lower than PIL.Image.thumbnail
-            img = image_resize(frame,width=860,height=720)
+            img = image_resize(frame,width=CANVAS_SIZE[0],height=CANVAS_SIZE[1])
             img = Image.fromarray(img)
 
 
@@ -221,6 +223,6 @@ class App:
             self._save_labels()
 
 window = tk.Tk()
-window.geometry("1600x900")
+window.geometry("{}x{}".format(*WINDOW_SIZE))
 
 App(window)
