@@ -5,6 +5,7 @@ from tkinter.ttk import Progressbar
 from PIL import ImageTk,Image
 import os
 import configparser
+import time
 
 import keyboard
 
@@ -185,16 +186,16 @@ class App:
         
     def play_video(self,one_frame = False):  
         """ Play video with frame delay of DELAY ms"""
+        
         ret,frame = self.vid.read()
 
         if ret:
             # resize image
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
             # resize img without distortion, time cost is much lower than PIL.Image.thumbnail
-            img = image_resize(frame,width=CANVAS_SIZE[0],height=CANVAS_SIZE[1])
+            img = image_resize(img,width=CANVAS_SIZE[0],height=CANVAS_SIZE[1])
             img = Image.fromarray(img)
-
 
             self.photo = ImageTk.PhotoImage(image = img)
             self.canvas.create_image(0,0,image = self.photo,anchor = tk.NW)
@@ -203,7 +204,6 @@ class App:
             self.pos_frame += 1
             self.progress_bar['value'] = self.pos_frame
             self._update_info_label()
-
 
             if keyboard.is_pressed('space'):
                 self.frame_labels[self.pos_frame-1] = True
@@ -216,7 +216,6 @@ class App:
                     self.after_id = self.window.after(DELAY,self.play_video)
                 else:
                     self.window.after_cancel(self.after_id)
-                
 
         else:
             self.play_or_stop_video()
