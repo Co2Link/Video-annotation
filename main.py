@@ -186,7 +186,7 @@ class App:
         
     def play_video(self,one_frame = False):  
         """ Play video with frame delay of DELAY ms"""
-        
+        time1=time.time()
         ret,frame = self.vid.read()
 
         if ret:
@@ -194,7 +194,7 @@ class App:
             img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
             # resize img without distortion, time cost is much lower than PIL.Image.thumbnail
-            img = image_resize(img,width=CANVAS_SIZE[0],height=CANVAS_SIZE[1])
+            # img = image_resize(img,width=CANVAS_SIZE[0],height=CANVAS_SIZE[1])
             img = Image.fromarray(img)
 
             self.photo = ImageTk.PhotoImage(image = img)
@@ -216,7 +216,7 @@ class App:
                     self.after_id = self.window.after(DELAY,self.play_video)
                 else:
                     self.window.after_cancel(self.after_id)
-
+            print(time.time()-time1)
         else:
             self.play_or_stop_video()
             self._save_labels()
