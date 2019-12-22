@@ -20,7 +20,8 @@ def main():
     opWrapper.start()
 
     file_dir = 'videos'
-    cap = cv2.VideoCapture(file_dir+'/20190214_Group1-1_cropped.mp4')
+    file_path = file_dir + '/20190214_Group1-1_cropped.mp4'
+    cap = cv2.VideoCapture(file_path)
     fc = Frame_rate_calculator()
 
     fc.start_record()

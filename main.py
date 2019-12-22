@@ -6,10 +6,12 @@ from PIL import ImageTk,Image
 import os
 import configparser
 import time
+import wave
+import pygame
 
 import keyboard
 
-from utils import image_resize
+from utils import image_resize,Frame_rate_calculator
 
 # Setting
 config = configparser.ConfigParser()
@@ -22,6 +24,8 @@ DELAY = int(Setting['delay'])
 
 WINDOW_SIZE = (int(Setting['window_width']),int(Setting['window_height']))
 CANVAS_SIZE = (int(Setting['canvas_width']),int(Setting['canvas_height']))
+
+fc = Frame_rate_calculator()
 
 
 class App:
@@ -129,12 +133,32 @@ class App:
             }
             print('*** video information ***')
             print(self.vid_info)
+            # Set canvas size to frame sizse
+            self.canvas['width'] = self.vid.get(cv2.CAP_PROP_FRAME_WIDTH)
+            self.canvas['height'] = self.vid.get(cv2.CAP_PROP_FRAME_HEIGHT)
             self._showchoice()
             self.frame_labels = [False for _ in range(int(self.vid_info['frames']))]
             self.pos_frame = 0
+            self.progress_bar['length'] = self.vid.get(cv2.CAP_PROP_FRAME_WIDTH)
             self.progress_bar['maximum'] = int(self.vid_info['frames'])
             self.progress_bar['value'] = 1
+
+
+
+            self.audio_path = os.path.join('audio',''.join(os.path.basename(self.video_path).split('.')[:-1])+'.wav')
+            self.frequency = wave.open(self.audio_path).getframerate()
+            print(self.frequency)
+            pygame.mixer.init(frequency = 4000)
+            pygame.mixer.music.load(self.audio_path)
+            pygame.mixer.music.play()
+
             self.play_video(one_frame=True)
+            fc.start_record()
+
+            
+            
+            
+            
             
         except Exception as e:
             print(e)
@@ -200,6 +224,9 @@ class App:
             self.photo = ImageTk.PhotoImage(image = img)
             self.canvas.create_image(0,0,image = self.photo,anchor = tk.NW)
 
+            # frame
+            fc.frame_end()
+
             # Progress bar
             self.pos_frame += 1
             self.progress_bar['value'] = self.pos_frame
@@ -216,7 +243,6 @@ class App:
                     self.after_id = self.window.after(DELAY,self.play_video)
                 else:
                     self.window.after_cancel(self.after_id)
-            print(time.time()-time1)
         else:
             self.play_or_stop_video()
             self._save_labels()
