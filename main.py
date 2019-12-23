@@ -11,7 +11,7 @@ import pygame
 
 import keyboard
 
-from utils import image_resize,Frame_rate_calculator
+from utils import image_resize,Frame_rate_calculator,timethis
 
 # Setting
 config = configparser.ConfigParser()
@@ -21,6 +21,7 @@ Action = dict(config['ACTION'])
 Setting = dict(config['SETTING'])
 
 DELAY = int(Setting['delay'])
+SPEED = float(Setting['play_speed'])
 
 WINDOW_SIZE = (int(Setting['window_width']),int(Setting['window_height']))
 CANVAS_SIZE = (int(Setting['canvas_width']),int(Setting['canvas_height']))
@@ -32,6 +33,8 @@ class App:
     def __init__(self, window):
         self.window = window
         self.window.title('Annotation')
+
+        self.delay = DELAY
 
         # Menu
         menubar = tk.Menu(window)
@@ -106,12 +109,13 @@ class App:
                 self.play=False
                 self.play_btn_text.set('PLAY')
                 self.window.after_cancel(self.after_id)
+                pygame.mixer.music.pause()
             else:
                 self.play=True
                 self.play_btn_text.set('PAUSE')
+                fc.start_record()
                 self.play_video()
-
-
+                pygame.mixer.music.unpause()
     
     def onOpen(self):
         """ Open video file """
@@ -142,23 +146,19 @@ class App:
             self.progress_bar['length'] = self.vid.get(cv2.CAP_PROP_FRAME_WIDTH)
             self.progress_bar['maximum'] = int(self.vid_info['frames'])
             self.progress_bar['value'] = 1
+            self._update_info_label()
 
-
-
-            self.audio_path = os.path.join('audio',''.join(os.path.basename(self.video_path).split('.')[:-1])+'.wav')
-            self.frequency = wave.open(self.audio_path).getframerate()
-            print(self.frequency)
-            pygame.mixer.init(frequency = 4000)
+            self.audio_path = os.path.join('audio',''.join(os.path.basename(self.video_path).split('.')[:-1])+'_'+str(SPEED) + '.mp3')
+            print(self.audio_path)
+            self.frequency = 48000
+            print('frequency: ',self.frequency)
+            pygame.mixer.init(frequency = self.frequency)
             pygame.mixer.music.load(self.audio_path)
             pygame.mixer.music.play()
+            pygame.mixer.music.pause()
+            self.audio_len = pygame.mixer.Sound('.'.join(self.audio_path.split('.')[:-1])+'.wav').get_length()
 
             self.play_video(one_frame=True)
-            fc.start_record()
-
-            
-            
-            
-            
             
         except Exception as e:
             print(e)
@@ -169,11 +169,11 @@ class App:
         if hasattr(self,'vid'):
             if backward:
                 next_pos_frame = self.pos_frame - step
+                # delete labels
                 for idx in range(next_pos_frame,self.pos_frame+1):
                     self.frame_labels[idx-1] = False
             else:
                 next_pos_frame = self.pos_frame + step 
-
 
             if next_pos_frame < 1:
                 self.pos_frame = 1
@@ -186,6 +186,19 @@ class App:
             self.pos_frame -= 1
             self.vid.set(cv2.CAP_PROP_POS_FRAMES,self.pos_frame)
             self.play_video(one_frame=True)
+
+            # set audio progress
+            self._set_sound()
+
+            self._update_info_label()
+    
+    def _set_sound(self):
+            progress = self.pos_frame/self.vid_info['frames']
+            pos = progress*self.audio_len
+            pygame.mixer.music.rewind()
+            pygame.mixer.music.set_pos(pos)
+            if not self.play:
+                pygame.mixer.music.pause()
 
     def _update_info_label(self):
         """ Update the information using on gui """
@@ -207,42 +220,50 @@ class App:
         with open('result/'+file_name,'w') as f:
             print('*** saving result at result/{} ***'.format(file_name))
             f.writelines([str(1 if label else 0)+'\n' for label in self.frame_labels])
-        
+
     def play_video(self,one_frame = False):  
         """ Play video with frame delay of DELAY ms"""
-        time1=time.time()
         ret,frame = self.vid.read()
 
         if ret:
-            # resize image
+
+            # Process and show image
             img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-            # resize img without distortion, time cost is much lower than PIL.Image.thumbnail
-            # img = image_resize(img,width=CANVAS_SIZE[0],height=CANVAS_SIZE[1])
             img = Image.fromarray(img)
-
             self.photo = ImageTk.PhotoImage(image = img)
             self.canvas.create_image(0,0,image = self.photo,anchor = tk.NW)
 
-            # frame
-            fc.frame_end()
-
-            # Progress bar
+            #  Update progress bar
             self.pos_frame += 1
             self.progress_bar['value'] = self.pos_frame
             self._update_info_label()
 
-            if keyboard.is_pressed('space'):
-                self.frame_labels[self.pos_frame-1] = True
-                self.status_label.config(text='label',bg='red')
-            else:
-                self.status_label.config(text='noob ',bg='white')
-
             if not one_frame:
+                
+                # compute delay for stable fps
+                fc.frame_end(time.time())
+                margin = 1/(self.vid_info['fps']*SPEED) - fc.get_frame_time()
+                # print(margin)
+                self.delay += int(margin*1000*0.4)
+                self.delay = max(2,self.delay)
+
+                
+                # Check for label
+                if keyboard.is_pressed('space'):
+                    self.frame_labels[self.pos_frame-1] = True
+                    self.status_label.config(text='label',bg='red')
+                else:
+                    self.status_label.config(text='noob ',bg='white')
+
+                # Continue showing image
                 if self.play:
-                    self.after_id = self.window.after(DELAY,self.play_video)
+                    self.after_id = self.window.after(self.delay,self.play_video)
+                    if self.pos_frame%100 == 0:
+                        self._set_sound()
                 else:
                     self.window.after_cancel(self.after_id)
+            else:
+                self.vid.set(cv2.CAP_PROP_POS_FRAMES,self.vid.get(cv2.CAP_PROP_POS_FRAMES)-1)
         else:
             self.play_or_stop_video()
             self._save_labels()

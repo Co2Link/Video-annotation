@@ -3,6 +3,17 @@ import numpy as np
 import time
 from tqdm import tqdm
 from collections import deque
+from functools import wraps
+
+def timethis(func):
+    @wraps(func)
+    def wrapper(*args,**kwargs):
+        start = time.time()
+        result = func(*args,**kwargs)
+        end = time.time()
+        print("{} {:.3f}".format(func.__name__,end-start))
+        return result
+    return wrapper
 
 def resize_video(video_path):
     cap = cv2.VideoCapture(video_path)
@@ -64,18 +75,20 @@ def image_resize(image, width = None, height = None, inter = cv2.INTER_AREA):
 class Frame_rate_calculator:
     def __init__(self):
         self.start = 0
-        self.time_list = deque(maxlen=5)
+        self.time_list = deque(maxlen=10)
         self.current_frame_rate = 0
         self.output_frame_rate = 0
         self.counter = 0
         self.frame_rate_update_time = 0
     def start_record(self):
         self.start = time.time()
-    def frame_end(self):
-        self.time_list.append(time.time()-self.start)
-        self.start = time.time()
+    def frame_end(self,now):
+        self.time_list.append(now-self.start)
+        self.start = now
         self.current_frame_rate = round(1/(sum(self.time_list)/len(self.time_list)),2)
         return self.current_frame_rate
+    def get_frame_time(self):
+        return sum(self.time_list)/len(self.time_list)
     def get_frame_rate(self):
         if time.time() - self.frame_rate_update_time > 1:
             self.output_frame_rate = self.current_frame_rate
