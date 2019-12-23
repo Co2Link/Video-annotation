@@ -233,10 +233,7 @@ class App:
             self.photo = ImageTk.PhotoImage(image = img)
             self.canvas.create_image(0,0,image = self.photo,anchor = tk.NW)
 
-            #  Update progress bar
-            self.pos_frame += 1
-            self.progress_bar['value'] = self.pos_frame
-            self._update_info_label()
+
 
             if not one_frame:
                 
@@ -246,6 +243,11 @@ class App:
                 # print(margin)
                 self.delay += int(margin*1000*0.4)
                 self.delay = max(2,self.delay)
+
+                #  Update progress bar
+                self.pos_frame += 1
+                self.progress_bar['value'] = self.pos_frame
+                self._update_info_label()
 
                 
                 # Check for label
