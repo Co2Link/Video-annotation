@@ -8,9 +8,9 @@ import face_recognition
 from utils import Frame_rate_calculator
 
 def main():
-    op_dir = 'F:/openpose'
+    op_dir = 'F:/local/openpose'
     sys.path.append(op_dir + '/build/python/openpose/Release')
-    os.environ['PATH']  = os.environ['PATH'] + ';' + op_dir + '/build/x64/Release;' + op_dir + '/openpose/build/bin;'
+    os.environ['PATH']  = os.environ['PATH'] + ';' + op_dir + '/build/x64/Release;' + op_dir + '/build/bin;'
     import pyopenpose as op
  
     params = {'model_folder':op_dir + '/models','face':True,'face_detector':2,'body':0}
@@ -42,7 +42,7 @@ def main():
 
         cv2.putText(img,'FPS:'+str(fc.get_frame_rate()),(10,50),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2,cv2.LINE_AA)
         
-        fc.frame_end()
+        fc.frame_end(time.time())
         cv2.imshow('i', img)
         
         if cv2.waitKey(1) == 27:
