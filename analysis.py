@@ -87,10 +87,7 @@ def train(X,Y,scale = True,upsample = True,test_ratio = 0.2,hidden_layer_sizes=[
         XY = pd.concat([true_upsampled,false])
         X_train,y_train = XY.drop(['label'],axis=1),XY.label
 
-        print(XY.label.value_counts())
         print('*** after upsampling. num of train({}) ,num of test({})***'.format(len(X_train),len(X_test)))
-
-    
 
     model = MLPClassifier(hidden_layer_sizes=hidden_layer_sizes)
     model.fit(X_train,y_train)
@@ -120,9 +117,9 @@ def main():
         print('accuracy: {}, f1: {}, recall: {}'.format(round(accuracy_list[idx],3),round(f1_list[idx],3),round(recall_list[idx],3)))
     print('avg: ',round(sum(accuracy_list)/len(accuracy_list),3),round(sum(f1_list)/len(f1_list),3),round(sum(recall_list)/len(recall_list),3))
         
-    for loss in loss_list:
-        plt.plot(loss)
-        plt.show()
+    # for loss in loss_list:
+    #     plt.plot(loss)
+    #     plt.show()
 if __name__ == "__main__":
     
     parser = argparse.ArgumentParser()
