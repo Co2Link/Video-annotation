@@ -2,6 +2,7 @@ import glob
 import os
 import csv
 import pandas as pd
+import pickle
 from utils import timethis
 
 import matplotlib.pyplot as plt
@@ -53,7 +54,8 @@ def data_preprocess(inputs,labels):
     action_name = 'smile'
     X = pd.DataFrame()
     Y = pd.Series()
-    for video in ['1','2']:
+
+    for video in ['1','2','3']:
         for person in ['a','b','c']:
             X = pd.concat([X,inputs[video][person][columns]],ignore_index=True)
             Y = pd.concat([Y,labels[video][person][action_name]],ignore_index=True)
@@ -99,14 +101,14 @@ def train(X,Y,scale = True,upsample = True,test_ratio = 0.2,hidden_layer_sizes=[
     f1 = f1_score(y_test,pred)
     recall = recall_score(y_test,pred)
 
-    return loss,accuracy,f1,recall
+    return loss,accuracy,f1,recall,model
 
 @timethis
-def main():
+def train_multi():
     X,Y = data_preprocess(read_input(),read_label())
     loss_list,accuracy_list,f1_list,recall_list=[],[],[],[]
     for i in tqdm(range(ITER)):
-        loss,accuracy,f1,recall = train(X,Y,scale=SCALE,upsample=UPSAMPLE,test_ratio=TEST_RATIO,hidden_layer_sizes=NET_SIZE)
+        loss,accuracy,f1,recall,_ = train(X,Y,scale=SCALE,upsample=UPSAMPLE,test_ratio=TEST_RATIO,hidden_layer_sizes=NET_SIZE)
         loss_list.append(loss)
         accuracy_list.append(accuracy)
         f1_list.append(f1)
@@ -117,13 +119,38 @@ def main():
         print('accuracy: {}, f1: {}, recall: {}'.format(round(accuracy_list[idx],3),round(f1_list[idx],3),round(recall_list[idx],3)))
     print('avg: ',round(sum(accuracy_list)/len(accuracy_list),3),round(sum(f1_list)/len(f1_list),3),round(sum(recall_list)/len(recall_list),3))
         
-    # for loss in loss_list:
-    #     plt.plot(loss)
-    #     plt.show()
+    for loss in loss_list:
+        plt.plot(loss)
+        plt.show()
+
+def train_and_save_model():
+    X,Y = data_preprocess(read_input(),read_label())
+    loss,accuracy,f1,recall,model = train(X,Y,scale=SCALE,upsample=UPSAMPLE,test_ratio=TEST_RATIO,hidden_layer_sizes=NET_SIZE)
+    print('accuracy: {}, f1: {}, recall: {}'.format(round(accuracy,3),round(f1,3),round(recall,3)))
+    
+    if not os.path.exists('models'):
+        os.mkdir('models')
+        print('*** create directory /models ***')
+    with open('models/model','wb') as f:
+        pickle.dump(model,f)
+        print('*** saved model at /models/model')
+def test_model():
+    X,Y = data_preprocess(read_input(),read_label(),test=True)
+    with open('models/model','rb') as f:
+        model = pickle.load(f)
+
+    pred = model.predict(X)
+    accuracy = accuracy_score(Y,pred)
+    f1 = f1_score(Y,pred)
+    recall = recall_score(Y,pred)
+
+    print('*** test result ***')
+    print('accuracy: {}, f1: {}, recall: {}'.format(round(accuracy,3),round(f1,3),round(recall,3)))
+
 if __name__ == "__main__":
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('-iter','--iteration',type=int,default=10)
+    parser.add_argument('-iter','--iteration',type=int,default=5)
     parser.add_argument('--scale',action='store_true')
     parser.add_argument('--upsample',action='store_true')
     parser.add_argument('--test_ratio',type=float,default=0.2)
@@ -135,8 +162,9 @@ if __name__ == "__main__":
     UPSAMPLE = args.upsample
     TEST_RATIO = args.test_ratio
     NET_SIZE = tuple([int(num) for num in args.net_size.split('-')])
-    
-    main()
+
+    # train_and_save_model()
+    train_multi()
 
     print(""" argument """)
     print(args)
