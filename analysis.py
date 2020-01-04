@@ -91,7 +91,7 @@ def train(X,Y,scale = True,upsample = True,test_ratio = 0.2,hidden_layer_sizes=[
 
         print('*** after upsampling. num of train({}) ,num of test({})***'.format(len(X_train),len(X_test)))
 
-    model = MLPClassifier(hidden_layer_sizes=hidden_layer_sizes)
+    model = MLPClassifier(hidden_layer_sizes=hidden_layer_sizes,max_iter=MAX_ITER)
     model.fit(X_train,y_train)
 
     pred = model.predict(X_test)
@@ -167,6 +167,7 @@ if __name__ == "__main__":
     parser.add_argument('--upsample',action='store_true')
     parser.add_argument('--test_ratio',type=float,default=0.2)
     parser.add_argument('--net_size',type=str,default='10-10')
+    parser.add_argument('--max_iter',type=int,default=200)
     args = parser.parse_args()
 
     ITER = args.iteration
@@ -174,9 +175,10 @@ if __name__ == "__main__":
     UPSAMPLE = args.upsample
     TEST_RATIO = args.test_ratio
     NET_SIZE = tuple([int(num) for num in args.net_size.split('-')])
+    MAX_ITER = args.max_iter
 
-    # train_and_save_model()
-    train_multi()
+    train_and_save_model()
+    # train_multi()
 
     print(""" argument """)
     print(args)
