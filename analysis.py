@@ -168,6 +168,7 @@ if __name__ == "__main__":
     parser.add_argument('--test_ratio',type=float,default=0.2)
     parser.add_argument('--net_size',type=str,default='10-10')
     parser.add_argument('--max_iter',type=int,default=200)
+    parser.add_argument('--train',action='store_true')
     args = parser.parse_args()
 
     ITER = args.iteration
@@ -177,8 +178,10 @@ if __name__ == "__main__":
     NET_SIZE = tuple([int(num) for num in args.net_size.split('-')])
     MAX_ITER = args.max_iter
 
-    train_and_save_model()
-    # train_multi()
+    if args.train:
+        train_and_save_model()
+    else:
+        train_multi()
 
     print(""" argument """)
     print(args)
