@@ -233,8 +233,6 @@ class App:
             self.photo = ImageTk.PhotoImage(image = img)
             self.canvas.create_image(0,0,image = self.photo,anchor = tk.NW)
 
-
-
             if not one_frame:
                 
                 # compute delay for stable fps

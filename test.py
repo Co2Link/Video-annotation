@@ -1,4 +1,6 @@
 import pickle
 
-with open('result/videos/20190214_Group1-1_cropped_10s_op_body.pkl','rb') as f:
-    my_list = pickle.load(f)
+a = {'1':123,'2':123}
+
+if '2' in a:
+    print('dsf')
