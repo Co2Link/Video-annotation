@@ -101,23 +101,34 @@ def train(X,Y,scale = True,upsample = True,test_ratio = 0.2,hidden_layer_sizes=[
     f1 = f1_score(y_test,pred)
     recall = recall_score(y_test,pred)
 
-    return loss,accuracy,f1,recall,model
+    pred_train = model.predict(X_train)
+
+    accuracy_train = accuracy_score(y_train,pred_train)
+    f1_train = f1_score(y_train,pred_train)
+    recall_train = recall_score(y_train,pred_train)
+
+    return loss,accuracy,f1,recall,accuracy_train,f1_train,recall_train,model
 
 @timethis
 def train_multi():
     X,Y = data_preprocess(read_input(),read_label())
-    loss_list,accuracy_list,f1_list,recall_list=[],[],[],[]
+    loss_list,accuracy_list,f1_list,recall_list,accuracy_train_list,f1_train_list,recall_train_list=[],[],[],[],[],[],[]
     for i in tqdm(range(ITER)):
-        loss,accuracy,f1,recall,_ = train(X,Y,scale=SCALE,upsample=UPSAMPLE,test_ratio=TEST_RATIO,hidden_layer_sizes=NET_SIZE)
+        loss,accuracy,f1,recall,accuracy_train,f1_train,recall_train,model = train(X,Y,scale=SCALE,upsample=UPSAMPLE,test_ratio=TEST_RATIO,hidden_layer_sizes=NET_SIZE)
         loss_list.append(loss)
         accuracy_list.append(accuracy)
         f1_list.append(f1)
         recall_list.append(recall)
+        accuracy_train_list.append(accuracy_train)
+        f1_train_list.append(f1_train)
+        recall_train_list.append(recall_train)
     
     
     for idx in range(len(loss_list)):
         print('accuracy: {}, f1: {}, recall: {}'.format(round(accuracy_list[idx],3),round(f1_list[idx],3),round(recall_list[idx],3)))
+        print('train accuracy: {}, f1: {}, recall: {}'.format(round(accuracy_train_list[idx],3),round(f1_train_list[idx],3),round(recall_train_list[idx],3)))
     print('avg: ',round(sum(accuracy_list)/len(accuracy_list),3),round(sum(f1_list)/len(f1_list),3),round(sum(recall_list)/len(recall_list),3))
+    print('train avg: ',round(sum(accuracy_train_list)/len(accuracy_train_list),3),round(sum(f1_train_list)/len(f1_train_list),3),round(sum(recall_train_list)/len(recall_train_list),3))
         
     for loss in loss_list:
         plt.plot(loss)
@@ -125,8 +136,9 @@ def train_multi():
 
 def train_and_save_model():
     X,Y = data_preprocess(read_input(),read_label())
-    loss,accuracy,f1,recall,model = train(X,Y,scale=SCALE,upsample=UPSAMPLE,test_ratio=TEST_RATIO,hidden_layer_sizes=NET_SIZE)
+    loss,accuracy,f1,recall,accuracy_train,f1_train,recall_train,model = train(X,Y,scale=SCALE,upsample=UPSAMPLE,test_ratio=TEST_RATIO,hidden_layer_sizes=NET_SIZE)
     print('accuracy: {}, f1: {}, recall: {}'.format(round(accuracy,3),round(f1,3),round(recall,3)))
+    print('train: accuracy: {}, f1: {}, recall: {}'.format(round(accuracy_train,3),round(f1_train,3),round(recall_train,3)))
     
     if not os.path.exists('models'):
         os.mkdir('models')
