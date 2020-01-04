@@ -5,6 +5,7 @@ import pandas as pd
 from utils import timethis
 
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 from sklearn.utils import resample
 from sklearn.model_selection import train_test_split
@@ -107,7 +108,7 @@ def train(X,Y,scale = True,upsample = True,test_ratio = 0.2,hidden_layer_sizes=[
 def main():
     X,Y = data_preprocess(read_input(),read_label())
     loss_list,accuracy_list,f1_list,recall_list=[],[],[],[]
-    for i in range(ITER):
+    for i in tqdm(range(ITER)):
         loss,accuracy,f1,recall = train(X,Y,scale=SCALE,upsample=UPSAMPLE,test_ratio=TEST_RATIO,hidden_layer_sizes=NET_SIZE)
         loss_list.append(loss)
         accuracy_list.append(accuracy)
