@@ -12,6 +12,7 @@ from sklearn.utils import resample
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import accuracy_score,f1_score,recall_score
+from sklearn.externals import joblib
 
 import argparse
 
@@ -143,14 +144,19 @@ def train_and_save_model():
     if not os.path.exists('models'):
         os.mkdir('models')
         print('*** create directory /models ***')
-    with open('models/model','wb') as f:
-        pickle.dump(model,f)
-        print('*** saved model at /models/model')
-def test_model():
-    X,Y = data_preprocess(read_input(),read_label(),test=True)
-    with open('models/model','rb') as f:
-        model = pickle.load(f)
 
+    joblib.dump(model,'models/model')    
+    print('*** saved model at /models/model')
+
+    plt.plot(loss)
+    plt.show()
+
+def get_model():
+    model = joblib.load('models/model')
+    return model
+def test_model():
+    X,Y = data_preprocess(read_input(),read_label())
+    model = joblib.load('models/model')
     pred = model.predict(X)
     accuracy = accuracy_score(Y,pred)
     f1 = f1_score(Y,pred)
@@ -158,6 +164,8 @@ def test_model():
 
     print('*** test result ***')
     print('accuracy: {}, f1: {}, recall: {}'.format(round(accuracy,3),round(f1,3),round(recall,3)))
+
+
 
 if __name__ == "__main__":
     
@@ -169,6 +177,7 @@ if __name__ == "__main__":
     parser.add_argument('--net_size',type=str,default='10-10')
     parser.add_argument('--max_iter',type=int,default=200)
     parser.add_argument('--train',action='store_true')
+    parser.add_argument('--test',action='store_true')
     args = parser.parse_args()
 
     ITER = args.iteration
@@ -180,6 +189,8 @@ if __name__ == "__main__":
 
     if args.train:
         train_and_save_model()
+    elif args.test:
+        test_model()
     else:
         train_multi()
 
