@@ -47,7 +47,7 @@ def read_input():
         inputs[video_name][person_name] = pd.read_csv(path)
     return inputs
 
-def data_preprocess(inputs,labels,videos = ['1','2','3']):
+def data_preprocess(inputs,labels,videos = ['1','2','3','4']):
     """ format data from dict"""
     columns = ['confidence','success','AU01_r', 'AU02_r', 'AU04_r', 'AU05_r', 'AU06_r', 'AU07_r', 'AU09_r', 'AU10_r', 'AU12_r', 'AU14_r', 'AU15_r', 'AU17_r', 'AU20_r', 'AU23_r', 'AU25_r', 'AU26_r', 'AU45_r','AU01_c', 'AU02_c', 'AU04_c', 'AU05_c', 'AU06_c', 'AU07_c', 'AU09_c', 'AU10_c', 'AU12_c', 'AU14_c', 'AU15_c', 'AU17_c', 'AU20_c', 'AU23_c', 'AU25_c', 'AU26_c', 'AU28_c', 'AU45_c']
     action_name = 'smile'
@@ -139,11 +139,23 @@ def train_multi():
         plt.show()
 
 def train_and_save_model():
-    X,Y = data_preprocess(read_input(),read_label(),videos=VIDEOS)
+    inputs = read_input()
+    labels = read_label()
+    X,Y = data_preprocess(inputs,labels,videos=Tr)
     loss,accuracy,f1,recall,precision,accuracy_train,f1_train,recall_train,precision_train,model = train(X,Y,scale=SCALE,upsample=UPSAMPLE,test_ratio=TEST_RATIO,hidden_layer_sizes=NET_SIZE)
     print('accuracy: {}, f1: {}, recall: {},precision: {}'.format(round(accuracy,3),round(f1,3),round(recall,3),round(precision,3)))
     print('train: accuracy: {}, f1: {}, recall: {}, precision: {}'.format(round(accuracy_train,3),round(f1_train,3),round(recall_train,3),round(precision_train,3)))
-    
+
+
+    X,Y = data_preprocess(input,labels,videos=TRAIN_VIDEOS)
+    pred = model.predict(X)
+    accuracy = accuracy_score(Y,pred)
+    f1 = f1_score(Y,pred)
+    recall = recall_score(Y,pred)
+    precision = precision_score(Y,pred)
+    print('*** test result ***')
+    print('accuracy: {}, f1: {}, recall: {}, precision: {}'.format(round(accuracy,3),round(f1,3),round(recall,3),round(precision,3)))
+
     if not os.path.exists('models'):
         os.mkdir('models')
         print('*** create directory /models ***')
@@ -184,7 +196,8 @@ if __name__ == "__main__":
     parser.add_argument('--max_iter',type=int,default=200)
     parser.add_argument('--train',action='store_true')
     parser.add_argument('--test',action='store_true')
-    parser.add_argument('--videos',type=str,default='123')
+    parser.add_argument('--train_videos',type=str,default='123')
+    parser.add_argument('--test_videos',type=str,default='4')
     parser.add_argument('--model_name',type=str,default='')
     args = parser.parse_args()
 
@@ -194,7 +207,8 @@ if __name__ == "__main__":
     TEST_RATIO = args.test_ratio
     NET_SIZE = tuple([int(num) for num in args.net_size.split('-')])
     MAX_ITER = args.max_iter
-    VIDEOS = [str(i) for i in args.videos]
+    TRAIN_VIDEOS = [str(i) for i in args.train_videos]
+    TEST_VIDEOS = [str(i) for i in args.test_videos]
     MODEL_NAME = args.model_name
 
     if args.train:
